@@ -70,6 +70,13 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        upBTN.setOnClickListener(this::OnClick);
+        downBTN.setOnClickListener(this::OnClick);
+        rBTN.setOnClickListener(this::OnClick);
+        lBTN.setOnClickListener(this::OnClick);
+
+
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -120,6 +127,12 @@ public class MainActivity extends AppCompatActivity {
             default:
                 message = "";
         }
+
+        if (!message.isEmpty()){
+            command = message;
+            Log.v("command", command);
+            loggerTV.setText(command);
+        }
         if (out != null && !message.isEmpty()) {
             out.println(message);
             mkmsg("Sent" + message + "\n");
@@ -128,8 +141,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
-    //connect to server
 
     class doNetwork implements Runnable {
         @Override
@@ -144,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.v("doNetwork", "Try block 1");
                 InetAddress serverAddr = InetAddress.getByName(h);
                 mkmsg("Attempting connection ..." + h + "\n");
-                Log.v("doNetwork", "Connecting to " + h + " on port " + PORT);
 
 
                 socket = new Socket(serverAddr, PORT);
@@ -161,18 +171,38 @@ public class MainActivity extends AppCompatActivity {
                     mkmsg("Attempting to send message ...\n ");
                     out.println(initialMessage);
                     Log.v("doNetwork", "Sending initial message.");
-                    mkmsg("Message sent");
+                    mkmsg("Message sent" + "\n");
 
-                    mkmsg("Attempting to receive message ...\n ");
-                    String str = in.readLine();
-                    mkmsg("Received message:\n" + str + "\n ");
-                    Log.v("doNetwork", "Receiving message.");
+                    boolean gameRunning = true;
+                    while (gameRunning){
+                        String serverMessage = in.readLine();
+                        if (serverMessage != null){
+                            Log.v("doNetwork", "Received message " + serverMessage + "\n");
+                            mkmsg("Received message " + serverMessage + "\n");
+
+                            if(serverMessage.startsWith("Status")){
+                                out.println(command);
+                                mkmsg("Sent command: " + command + "\n");
+                                Log.v("doNetwork", " Sent command " + command);
+
+                            }else if(serverMessage.startsWith("Info Dead") || serverMessage.startsWith("Info GameOver")){
+                                gameRunning =false;
+                            }else if (serverMessage.startsWith("setup")){
+                                out.println("compsciBot 0 3 2");
+                            }
+                        }
+                    }
+
 
                     mkmsg("Connection established \n");
                 } catch (Exception e) {
                     mkmsg("Error sending or receiving \n ");
                     Log.e("doNetwork", "Error sending or receiving", e);
                 }
+
+                socket.close();
+                in.close();
+                out.close();
 
             } catch (Exception e) {
                 mkmsg("Unable to connect" + e.getMessage() + "\n");
