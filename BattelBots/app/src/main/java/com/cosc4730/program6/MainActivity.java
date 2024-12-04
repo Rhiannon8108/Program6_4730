@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     public void mkmsg(String str) {
+        Log.v("mkmsg", str);
         Message msg = new Message();
         Bundle b = new Bundle();
         b.putString("msg", str);
@@ -135,21 +136,28 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             Log.v("doNetwork","running");
             String h = addressET.getText().toString();
-            mkmsg("host is" + h + "\n");
+            mkmsg(" host is " + h + "\n");
             Log.v("Address", h);
             mkmsg("port is " + PORT + "\n");
 
             try {
+                Log.v("doNetwork", "Try block 1");
                 InetAddress serverAddr = InetAddress.getByName(h);
                 mkmsg("Attempting connection ..." + h + "\n");
                 Log.v("doNetwork", "Connecting to " + h + " on port " + PORT);
+
+
                 socket = new Socket(serverAddr, PORT);
+                mkmsg("Socket initialized" + "\n");
                 String initialMessage = "Connected!!!";
 
                 out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                Log.v("doNetwork", "Streams initialized.");
+                mkmsg("Streams initialized\n");
 
                 try {
+                    Log.v("doNetwork", "Try block 2");
                     mkmsg("Attempting to send message ...\n ");
                     out.println(initialMessage);
                     Log.v("doNetwork", "Sending initial message.");
@@ -167,7 +175,8 @@ public class MainActivity extends AppCompatActivity {
                 }
 
             } catch (Exception e) {
-                mkmsg("Unable to connect \n");
+                mkmsg("Unable to connect" + e.getMessage() + "\n");
+                Log.v("doNetwork", "Unable to connect ");
             }
         }
     }
