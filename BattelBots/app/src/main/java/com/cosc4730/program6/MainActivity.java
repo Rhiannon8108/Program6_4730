@@ -41,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+    private String command = "compsciBot 0 3 2";
 
 
     @Override
@@ -132,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
     class doNetwork implements Runnable {
         @Override
         public void run() {
+            Log.v("doNetwork","running");
             String h = addressET.getText().toString();
             mkmsg("host is" + h + "\n");
             Log.v("Address", h);
@@ -140,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 InetAddress serverAddr = InetAddress.getByName(h);
                 mkmsg("Attempting connection ..." + h + "\n");
+                Log.v("doNetwork", "Connecting to " + h + " on port " + PORT);
                 socket = new Socket(serverAddr, PORT);
                 String initialMessage = "Connected!!!";
 
@@ -149,15 +152,18 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     mkmsg("Attempting to send message ...\n ");
                     out.println(initialMessage);
+                    Log.v("doNetwork", "Sending initial message.");
                     mkmsg("Message sent");
 
                     mkmsg("Attempting to receive message ...\n ");
                     String str = in.readLine();
                     mkmsg("Received message:\n" + str + "\n ");
+                    Log.v("doNetwork", "Receiving message.");
 
                     mkmsg("Connection established \n");
                 } catch (Exception e) {
                     mkmsg("Error sending or receiving \n ");
+                    Log.e("doNetwork", "Error sending or receiving", e);
                 }
 
             } catch (Exception e) {
