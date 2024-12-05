@@ -27,6 +27,8 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import javax.xml.transform.TransformerException;
+
 public class MainActivity extends AppCompatActivity {
     View view;
     private Button connBTN;
@@ -105,24 +107,25 @@ public class MainActivity extends AppCompatActivity {
     public void OnClick(View view) {
         Button button = (Button) view;
         String buttonTxt = button.getText().toString();
-        String message;
+        String message = "";
 
         switch (buttonTxt) {
             case "UP":
-                message = "UP";
+                message = "move 0 -1";
                 break;
 
             case "DOWN":
-                message = "DOWN";
+                message = "move 0 1";
                 break;
             case "L":
-                message = "LEFT";
+                message = "move -1 0";
                 break;
             case "R":
-                message = "RIGHT";
+                message = "move 1 0";
                 break;
             case "PEW":
-                message = "PEW";
+                message = " fire 0";
+                //message = "PEW";
                 break;
             default:
                 message = "";
@@ -133,13 +136,18 @@ public class MainActivity extends AppCompatActivity {
             Log.v("command", command);
             loggerTV.setText(command);
         }
-        if (out != null && !message.isEmpty()) {
-            out.println(message);
-            mkmsg("Sent" + message + "\n");
-        } else {
-            mkmsg("Something went wrong \n");
-        }
+        final String finalMessage = message;
+        new Thread(() -> {
+            if( out != null && !finalMessage.isEmpty()){
+                out.println(finalMessage);
+                runOnUiThread(() -> mkmsg("Sent " + finalMessage + "\n"));
 
+                out.println("noop");
+                runOnUiThread(() -> mkmsg("sent noop \n"));
+            } else {
+                runOnUiThread(() -> mkmsg("Something went wrong \n") );
+            }
+        }).start();
     }
 
     class doNetwork implements Runnable {
@@ -159,45 +167,43 @@ public class MainActivity extends AppCompatActivity {
 
                 socket = new Socket(serverAddr, PORT);
                 mkmsg("Socket initialized" + "\n");
-                String initialMessage = "Connected!!!";
 
                 out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                Log.v("doNetwork", "Streams initialized.");
                 mkmsg("Streams initialized\n");
 
                 try {
                     Log.v("doNetwork", "Try block 2");
                     mkmsg("Attempting to send message ...\n ");
-                    out.println(initialMessage);
+                    out.println(command);
                     Log.v("doNetwork", "Sending initial message.");
                     mkmsg("Message sent" + "\n");
 
                     boolean gameRunning = true;
                     while (gameRunning){
-                        String serverMessage = in.readLine();
+                       String serverMessage = in.readLine();
                         if (serverMessage != null){
-                            Log.v("doNetwork", "Received message " + serverMessage + "\n");
                             mkmsg("Received message " + serverMessage + "\n");
+                            Log.v( "Server Message", serverMessage);
 
                             if(serverMessage.startsWith("Status")){
                                 out.println(command);
+                                Log.v("Server Message", serverMessage);
                                 mkmsg("Sent command: " + command + "\n");
-                                Log.v("doNetwork", " Sent command " + command);
 
                             }else if(serverMessage.startsWith("Info Dead") || serverMessage.startsWith("Info GameOver")){
                                 gameRunning =false;
-                            }else if (serverMessage.startsWith("setup")){
-                                out.println("compsciBot 0 3 2");
-                            }
+                                Log.v("You died", serverMessage);
+;                            }
+
                         }
+
                     }
 
 
                     mkmsg("Connection established \n");
                 } catch (Exception e) {
                     mkmsg("Error sending or receiving \n ");
-                    Log.e("doNetwork", "Error sending or receiving", e);
                 }
 
                 socket.close();
@@ -207,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 mkmsg("Unable to connect" + e.getMessage() + "\n");
                 Log.v("doNetwork", "Unable to connect ");
+
             }
         }
     }
